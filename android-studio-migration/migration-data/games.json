@@ -1,0 +1,18 @@
+[
+  {
+    "id": "pubg",
+    "name": "PUBG Mobile",
+    "packageName": "com.tencent.ig",
+    "engine": "Unreal Engine 4",
+    "cpuIntensity": "High",
+    "gpuIntensity": "High"
+  },
+  {
+    "id": "freefire",
+    "name": "Free Fire",
+    "packageName": "com.dts.freefireth",
+    "engine": "Unity",
+    "cpuIntensity": "Medium",
+    "gpuIntensity": "Medium"
+  }
+]

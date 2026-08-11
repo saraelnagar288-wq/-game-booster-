@@ -1,0 +1,6 @@
+{
+  "name": "GameBoost AI",
+  "description": "Android-style gaming assistant, hardware analyzer, and performance optimizer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
