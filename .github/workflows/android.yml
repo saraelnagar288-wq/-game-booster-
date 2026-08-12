@@ -1,4 +1,4 @@
-name: Build GameBoost AI Android APK
+name: Game boost AI debug APK
 
 on:
   workflow_dispatch:
@@ -14,6 +14,7 @@ env:
 
 jobs:
   build-android:
+    name: Build Game boost AI debug APK
     runs-on: ubuntu-latest
 
     steps:
@@ -34,18 +35,22 @@ jobs:
           sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;35.0.0"
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
 
-      - name: Set up Gradle 8.4
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.4'
-
       - name: Build debug APK
         working-directory: android
-        run: gradle :app:assembleDebug --stacktrace
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleDebug --stacktrace
 
-      - name: Upload APK artifact
+      - name: Verify real APK exists
+        run: |
+          test -s android/app/build/outputs/apk/debug/app-debug.apk
+          echo "APK verified: android/app/build/outputs/apk/debug/app-debug.apk"
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Game boost AI debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: GameBoost-AI-debug-apk
+          name: Game boost AI debug APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 14
