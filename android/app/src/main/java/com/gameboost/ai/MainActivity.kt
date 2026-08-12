@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.*
 import com.gameboost.ai.ui.screens.DashboardScreen
+import com.gameboost.ai.ui.screens.PerformanceScreen
 import com.gameboost.ai.ui.theme.GameBoostAITheme
 import com.gameboost.ai.ui.theme.Neutral900
 import com.gameboost.ai.ui.theme.Neutral950
@@ -27,29 +28,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             GameBoostAITheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = Neutral950
-                ) {
+                Surface(modifier = Modifier.fillMaxSize(), color = Neutral950) {
                     val navController = rememberNavController()
                     Scaffold(
                         bottomBar = {
-                            NavigationBar(
-                                containerColor = Neutral900,
-                                contentColor = Neutral950
-                            ) {
+                            NavigationBar(containerColor = Neutral900, contentColor = Neutral950) {
                                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                                 val currentRoute = navBackStackEntry?.destination?.route
 
                                 NavigationBarItem(
-                                    icon = { Text("Home", color = if (currentRoute == "dashboard") Cyan400 else Color.Gray) },
+                                    icon = { Text("⌂", color = if (currentRoute == "dashboard") Cyan400 else Color.Gray) },
                                     label = { Text("Dashboard", color = if (currentRoute == "dashboard") Cyan400 else Color.Gray) },
                                     selected = currentRoute == "dashboard",
                                     onClick = { navController.navigate("dashboard") },
                                     colors = NavigationBarItemDefaults.colors(indicatorColor = Neutral950)
                                 )
                                 NavigationBarItem(
-                                    icon = { Text("Monitor", color = if (currentRoute == "monitor") Cyan400 else Color.Gray) },
+                                    icon = { Text("⚡", color = if (currentRoute == "performance") Cyan400 else Color.Gray) },
+                                    label = { Text("Performance", color = if (currentRoute == "performance") Cyan400 else Color.Gray) },
+                                    selected = currentRoute == "performance",
+                                    onClick = { navController.navigate("performance") },
+                                    colors = NavigationBarItemDefaults.colors(indicatorColor = Neutral950)
+                                )
+                                NavigationBarItem(
+                                    icon = { Text("◉", color = if (currentRoute == "monitor") Cyan400 else Color.Gray) },
                                     label = { Text("Monitor", color = if (currentRoute == "monitor") Cyan400 else Color.Gray) },
                                     selected = currentRoute == "monitor",
                                     onClick = { navController.navigate("monitor") },
@@ -64,7 +66,8 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(innerPadding)
                         ) {
                             composable("dashboard") { DashboardScreen(viewModel) }
-                            composable("monitor") { 
+                            composable("performance") { PerformanceScreen() }
+                            composable("monitor") {
                                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                     Text("Monitor (WIP)", color = Color.White)
                                 }
