@@ -58,7 +58,11 @@ class MainActivity : ComponentActivity() {
                         startDestination = "dashboard",
                         modifier = Modifier.padding(padding)
                     ) {
-                        composable("dashboard") { DashboardScreen(viewModel) }
+                        composable("dashboard") {
+                            DashboardScreen(viewModel) { destination ->
+                                navController.navigate(destination) { launchSingleTop = true }
+                            }
+                        }
                         composable("performance") { PerformanceScreen() }
                         composable("games") { GamesScreen() }
                         composable("fps") { FpsMonitorScreen() }
