@@ -4,21 +4,26 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.gameboost.ai.ui.screens.AiAssistantScreen
+import com.gameboost.ai.ui.screens.BatteryScreen
 import com.gameboost.ai.ui.screens.DashboardScreen
+import com.gameboost.ai.ui.screens.FpsMonitorScreen
+import com.gameboost.ai.ui.screens.GamesScreen
 import com.gameboost.ai.ui.screens.PerformanceScreen
+import com.gameboost.ai.ui.screens.SettingsScreen
+import com.gameboost.ai.ui.screens.ThermalScreen
+import com.gameboost.ai.ui.theme.Cyan400
 import com.gameboost.ai.ui.theme.GameBoostAITheme
 import com.gameboost.ai.ui.theme.Neutral900
 import com.gameboost.ai.ui.theme.Neutral950
-import com.gameboost.ai.ui.theme.Cyan400
 import com.gameboost.ai.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
@@ -28,54 +33,70 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             GameBoostAITheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = Neutral950) {
-                    val navController = rememberNavController()
-                    Scaffold(
-                        bottomBar = {
-                            NavigationBar(containerColor = Neutral900, contentColor = Neutral950) {
-                                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                                val currentRoute = navBackStackEntry?.destination?.route
+                val navController = rememberNavController()
+                val entry by navController.currentBackStackEntryAsState()
+                val route = entry?.destination?.route ?: "dashboard"
 
-                                NavigationBarItem(
-                                    icon = { Text("⌂", color = if (currentRoute == "dashboard") Cyan400 else Color.Gray) },
-                                    label = { Text("Dashboard", color = if (currentRoute == "dashboard") Cyan400 else Color.Gray) },
-                                    selected = currentRoute == "dashboard",
-                                    onClick = { navController.navigate("dashboard") },
-                                    colors = NavigationBarItemDefaults.colors(indicatorColor = Neutral950)
-                                )
-                                NavigationBarItem(
-                                    icon = { Text("⚡", color = if (currentRoute == "performance") Cyan400 else Color.Gray) },
-                                    label = { Text("Performance", color = if (currentRoute == "performance") Cyan400 else Color.Gray) },
-                                    selected = currentRoute == "performance",
-                                    onClick = { navController.navigate("performance") },
-                                    colors = NavigationBarItemDefaults.colors(indicatorColor = Neutral950)
-                                )
-                                NavigationBarItem(
-                                    icon = { Text("◉", color = if (currentRoute == "monitor") Cyan400 else Color.Gray) },
-                                    label = { Text("Monitor", color = if (currentRoute == "monitor") Cyan400 else Color.Gray) },
-                                    selected = currentRoute == "monitor",
-                                    onClick = { navController.navigate("monitor") },
-                                    colors = NavigationBarItemDefaults.colors(indicatorColor = Neutral950)
-                                )
-                            }
+                Scaffold(
+                    containerColor = Neutral950,
+                    bottomBar = {
+                        NavigationBar(containerColor = Neutral900) {
+                            NavItem("⌂", "Dashboard", "dashboard", route, navController)
+                            NavItem("⚡", "Performance", "performance", route, navController)
+                            NavItem("🎮", "Games", "games", route, navController)
+                            NavItem("📊", "FPS", "fps", route, navController)
+                            NavItem("🧠", "AI", "ai", route, navController)
+                            NavItem("🔋", "Battery", "battery", route, navController)
+                            NavItem("🌡️", "Thermal", "thermal", route, navController)
+                            NavItem("⚙️", "Settings", "settings", route, navController)
                         }
-                    ) { innerPadding ->
-                        NavHost(
-                            navController = navController,
-                            startDestination = "dashboard",
-                            modifier = Modifier.padding(innerPadding)
-                        ) {
-                            composable("dashboard") { DashboardScreen(viewModel) }
-                            composable("performance") { PerformanceScreen() }
-                            composable("monitor") {
-                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text("Monitor (WIP)", color = Color.White)
-                                }
-                            }
-                        }
+                    }
+                ) { padding ->
+                    NavHost(
+                        navController = navController,
+                        startDestination = "dashboard",
+                        modifier = Modifier.padding(padding)
+                    ) {
+                        composable("dashboard") { DashboardScreen(viewModel) }
+                        composable("performance") { PerformanceScreen() }
+                        composable("games") { GamesScreen() }
+                        composable("fps") { FpsMonitorScreen() }
+                        composable("ai") { AiAssistantScreen() }
+                        composable("battery") { BatteryScreen(this@MainActivity) }
+                        composable("thermal") { ThermalScreen(this@MainActivity) }
+                        composable("settings") { SettingsScreen(this@MainActivity) }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun NavItem(
+    icon: String,
+    label: String,
+    destination: String,
+    current: String,
+    navController: androidx.navigation.NavHostController
+) {
+    NavigationBarItem(
+        selected = current == destination,
+        onClick = {
+            navController.navigate(destination) {
+                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        },
+        icon = { Text(icon) },
+        label = { Text(label, maxLines = 1) },
+        colors = NavigationBarItemDefaults.colors(
+            selectedIconColor = Cyan400,
+            selectedTextColor = Cyan400,
+            indicatorColor = Neutral950,
+            unselectedIconColor = androidx.compose.ui.graphics.Color.Gray,
+            unselectedTextColor = androidx.compose.ui.graphics.Color.Gray
+        )
+    )
 }
