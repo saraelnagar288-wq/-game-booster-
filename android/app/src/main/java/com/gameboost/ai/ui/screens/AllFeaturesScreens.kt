@@ -128,7 +128,7 @@ fun BatteryScreen(context: Context) {
     val batteryManager = remember { context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager }
     val level = remember { batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY) }
     val power = remember { context.getSystemService(Context.POWER_SERVICE) as PowerManager }
-    val saver = remember { power.isPowerSaveMode }
+    val saver = power.isPowerSaveMode
     FeatureScaffold("BATTERY", "Real Android battery information") {
         MetricHero("$level%", "BATTERY", if (saver) "POWER SAVER ON" else "NORMAL", Emerald400)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
@@ -142,10 +142,40 @@ fun BatteryScreen(context: Context) {
     }
 }
 
+private enum class ThermalMode(val title: String, val icon: String, val description: String) {
+    COOL("Cool", "❄️", "Prioritize lower thermal load. Reduce demanding workloads if the device becomes warm."),
+    BALANCED("Balanced", "⚖️", "Monitor thermal state while keeping normal gaming performance."),
+    PERFORMANCE("Performance", "🔥", "Prioritize performance while continuously watching for thermal throttling.")
+}
+
 @Composable
 fun ThermalScreen(context: Context) {
     val power = remember { context.getSystemService(Context.POWER_SERVICE) as PowerManager }
-    val status = if (Build.VERSION.SDK_INT >= 29) power.currentThermalStatus else PowerManager.THERMAL_STATUS_NONE
+    var status by remember {
+        mutableIntStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) power.currentThermalStatus
+            else PowerManager.THERMAL_STATUS_NONE
+        )
+    }
+    var headroom by remember { mutableFloatStateOf(Float.NaN) }
+    var selectedMode by remember { mutableStateOf(ThermalMode.BALANCED) }
+
+    // Poll the official Android thermal APIs while this screen is visible.
+    // This avoids hidden/OEM APIs and works without root or Shizuku.
+    LaunchedEffect(power) {
+        while (true) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                status = runCatching { power.currentThermalStatus }.getOrDefault(PowerManager.THERMAL_STATUS_NONE)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                headroom = runCatching { power.getThermalHeadroom(0) }.getOrDefault(Float.NaN)
+            } else {
+                headroom = Float.NaN
+            }
+            kotlinx.coroutines.delay(2000)
+        }
+    }
+
     val label = when (status) {
         PowerManager.THERMAL_STATUS_NONE -> "NONE"
         PowerManager.THERMAL_STATUS_LIGHT -> "LIGHT"
@@ -156,12 +186,72 @@ fun ThermalScreen(context: Context) {
         PowerManager.THERMAL_STATUS_SHUTDOWN -> "SHUTDOWN"
         else -> "UNKNOWN"
     }
-    val accent = if (status >= PowerManager.THERMAL_STATUS_SEVERE) Red400 else Emerald400
-    FeatureScaffold("THERMAL", "Android thermal status") {
-        MetricHero(label, "THERMAL STATUS", if (status >= PowerManager.THERMAL_STATUS_SEVERE) "ATTENTION" else "NORMAL", accent)
-        SectionCard("THERMAL MANAGEMENT") {
-            Text("Android API: ${Build.VERSION.SDK_INT}", color = Color.White)
-            Text("Temperature sensors are not universally exposed to third-party apps. This screen never fabricates temperatures.", color = Neutral400, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+    val attention = status >= PowerManager.THERMAL_STATUS_SEVERE
+    val accent = if (attention) Red400 else Emerald400
+    val headroomText = when {
+        headroom.isNaN() -> "Unavailable"
+        headroom.isInfinite() -> "Unavailable"
+        else -> "%.2f".format(headroom)
+    }
+    val recommendation = when {
+        status >= PowerManager.THERMAL_STATUS_CRITICAL -> "Stop heavy gaming and allow the device to cool down."
+        status >= PowerManager.THERMAL_STATUS_SEVERE -> "Thermal throttling may occur. Consider Cool mode."
+        status == PowerManager.THERMAL_STATUS_MODERATE -> "Device is warming up. Balanced mode is recommended."
+        else -> "Thermal condition is normal for gaming."
+    }
+
+    FeatureScaffold("THERMAL", "Android 16 thermal monitoring and safe gaming controls") {
+        MetricHero(
+            label,
+            "THERMAL STATUS",
+            if (attention) "ATTENTION" else "NORMAL",
+            accent
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            StatCard("HEADROOM", headroomText, Modifier.weight(1f))
+            StatCard("API", "Android ${Build.VERSION.SDK_INT}", Modifier.weight(1f))
+        }
+
+        SectionCard("THERMAL CONTROL") {
+            Text("Gaming thermal mode", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "These modes control GameBoost AI recommendations only. Android does not allow a normal app to directly change Samsung/SoC thermal limits.",
+                color = Neutral400,
+                fontSize = 11.sp
+            )
+            ThermalMode.values().forEach { mode ->
+                val selected = mode == selectedMode
+                Surface(
+                    onClick = { selectedMode = mode },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (selected) Cyan400.copy(alpha = .12f) else Neutral950,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) Cyan400.copy(.55f) else Neutral800)
+                ) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(mode.icon, fontSize = 22.sp)
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(mode.title, color = Color.White, fontWeight = FontWeight.Bold)
+                            Text(mode.description, color = Neutral400, fontSize = 10.sp)
+                        }
+                        if (selected) Text("ACTIVE", color = Cyan400, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
+        SectionCard("LIVE THERMAL MONITOR") {
+            Text("Current state: $label", color = Color.White, fontWeight = FontWeight.Bold)
+            Text("Thermal headroom: $headroomText", color = Neutral400, fontSize = 12.sp)
+            Text(recommendation, color = if (attention) Red400 else Emerald400, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "No fake temperature value is shown. Android only exposes thermal headroom/status when supported by the device.",
+                color = Neutral500,
+                fontSize = 10.sp
+            )
         }
     }
 }
