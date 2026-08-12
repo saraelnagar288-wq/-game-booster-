@@ -28,7 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import com.gameboost.ai.ui.screens.AiAssistantScreen
 import com.gameboost.ai.ui.screens.BatteryScreen
 import com.gameboost.ai.ui.screens.DashboardScreen
-import com.gameboost.ai.ui.screens.FpsMonitorScreen
+import com.gameboost.ai.ui.screens.DynamicFpsMonitorScreen
 import com.gameboost.ai.ui.screens.GamesScreen
 import com.gameboost.ai.ui.screens.PerformanceScreen
 import com.gameboost.ai.ui.screens.SettingsScreen
@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("performance") { PerformanceScreen() }
                         composable("games") { GamesScreen() }
-                        composable("fps") { FpsMonitorScreen() }
+                        composable("fps") { DynamicFpsMonitorScreen() }
                         composable("ai") { AiAssistantScreen() }
                         composable("battery") { BatteryScreen(this@MainActivity) }
                         composable("thermal") { ThermalScreen(this@MainActivity) }
