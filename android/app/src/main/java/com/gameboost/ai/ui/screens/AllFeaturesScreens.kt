@@ -2,7 +2,9 @@ package com.gameboost.ai.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
+import android.os.BatteryManager
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
@@ -125,8 +127,8 @@ fun AiAssistantScreen() {
 
 @Composable
 fun BatteryScreen(context: Context) {
-    val batteryManager = remember { context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager }
-    val level = remember { batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY) }
+    val batteryManager = remember { context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager }
+    val level = remember { batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) }
     val power = remember { context.getSystemService(Context.POWER_SERVICE) as PowerManager }
     val saver = power.isPowerSaveMode
     FeatureScaffold("BATTERY", "Real Android battery information") {
@@ -160,13 +162,8 @@ fun ThermalScreen(context: Context) {
     var headroom by remember { mutableFloatStateOf(Float.NaN) }
     var selectedMode by remember { mutableStateOf(ThermalMode.BALANCED) }
 
-    // Poll the official Android thermal APIs while this screen is visible.
-    // This avoids hidden/OEM APIs and works without root or Shizuku.
     LaunchedEffect(power) {
         while (true) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                status = runCatching { power.currentThermalStatus }.getOrDefault(PowerManager.THERMAL_STATUS_NONE)
-            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 headroom = runCatching { power.getThermalHeadroom(0) }.getOrDefault(Float.NaN)
             } else {
@@ -174,6 +171,26 @@ fun ThermalScreen(context: Context) {
             }
             kotlinx.coroutines.delay(2000)
         }
+    }
+
+    DisposableEffect(power) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val listener = PowerManager.OnThermalStatusChangedListener { newStatus ->
+                status = newStatus
+            }
+            power.addThermalStatusListener(context.mainExecutor, listener)
+            onDispose { power.removeThermalStatusListener(listener) }
+        } else {
+            onDispose { }
+        }
+    }
+
+    val batteryTempC = remember(context) {
+        runCatching {
+            val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            val tenthsC = intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE) ?: Int.MIN_VALUE
+            if (tenthsC == Int.MIN_VALUE) null else tenthsC / 10f
+        }.getOrNull()
     }
 
     val label = when (status) {
@@ -186,12 +203,25 @@ fun ThermalScreen(context: Context) {
         PowerManager.THERMAL_STATUS_SHUTDOWN -> "SHUTDOWN"
         else -> "UNKNOWN"
     }
+    val statusDescription = when (status) {
+        PowerManager.THERMAL_STATUS_NONE -> "No thermal warning reported"
+        PowerManager.THERMAL_STATUS_LIGHT -> "Light thermal load"
+        PowerManager.THERMAL_STATUS_MODERATE -> "Moderate thermal load"
+        PowerManager.THERMAL_STATUS_SEVERE -> "Severe thermal load / throttling possible"
+        PowerManager.THERMAL_STATUS_CRITICAL -> "Critical thermal condition"
+        PowerManager.THERMAL_STATUS_EMERGENCY -> "Emergency thermal condition"
+        PowerManager.THERMAL_STATUS_SHUTDOWN -> "Shutdown thermal condition"
+        else -> "Thermal status unavailable"
+    }
     val attention = status >= PowerManager.THERMAL_STATUS_SEVERE
     val accent = if (attention) Red400 else Emerald400
     val headroomText = when {
-        headroom.isNaN() -> "Unavailable"
-        headroom.isInfinite() -> "Unavailable"
+        headroom.isNaN() || headroom.isInfinite() -> "Unavailable"
         else -> "%.2f".format(headroom)
+    }
+    val headroomPercent = when {
+        headroom.isNaN() || headroom.isInfinite() -> null
+        else -> (headroom.coerceIn(0f, 1f) * 100f).toInt()
     }
     val recommendation = when {
         status >= PowerManager.THERMAL_STATUS_CRITICAL -> "Stop heavy gaming and allow the device to cool down."
@@ -201,25 +231,28 @@ fun ThermalScreen(context: Context) {
     }
 
     FeatureScaffold("THERMAL", "Android 16 thermal monitoring and safe gaming controls") {
-        MetricHero(
-            label,
-            "THERMAL STATUS",
-            if (attention) "ATTENTION" else "NORMAL",
-            accent
-        )
+        MetricHero(label, "THERMAL STATUS", if (attention) "ATTENTION" else "NORMAL", accent)
+        Text(statusDescription, color = if (attention) Red400 else Neutral400, fontSize = 12.sp)
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            StatCard("HEADROOM", headroomText, Modifier.weight(1f))
-            StatCard("API", "Android ${Build.VERSION.SDK_INT}", Modifier.weight(1f))
+            StatCard("HEADROOM", if (headroomPercent == null) "Unavailable" else "$headroomPercent%", Modifier.weight(1f))
+            StatCard("API", "API ${Build.VERSION.SDK_INT}", Modifier.weight(1f))
+            StatCard("ANDROID", "Android ${Build.VERSION.RELEASE}", Modifier.weight(1f))
+        }
+
+        SectionCard("DEVICE THERMALS") {
+            if (batteryTempC == null) {
+                Text("Battery temperature: Unavailable", color = Neutral400, fontSize = 12.sp)
+            } else {
+                Text("Battery temperature: %.1f°C".format(batteryTempC), color = Color.White, fontWeight = FontWeight.Bold)
+                Text("This is the battery sensor, not a direct SoC/GPU temperature.", color = Neutral500, fontSize = 10.sp)
+            }
+            Text("Thermal API: Android PowerManager", color = Neutral400, fontSize = 11.sp)
         }
 
         SectionCard("THERMAL CONTROL") {
             Text("Gaming thermal mode", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text(
-                "These modes control GameBoost AI recommendations only. Android does not allow a normal app to directly change Samsung/SoC thermal limits.",
-                color = Neutral400,
-                fontSize = 11.sp
-            )
+            Text("These modes change GameBoost AI recommendations only. A normal app cannot directly change Samsung/SoC thermal limits.", color = Neutral400, fontSize = 11.sp)
             ThermalMode.values().forEach { mode ->
                 val selected = mode == selectedMode
                 Surface(
@@ -247,11 +280,7 @@ fun ThermalScreen(context: Context) {
             Text("Thermal headroom: $headroomText", color = Neutral400, fontSize = 12.sp)
             Text(recommendation, color = if (attention) Red400 else Emerald400, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(4.dp))
-            Text(
-                "No fake temperature value is shown. Android only exposes thermal headroom/status when supported by the device.",
-                color = Neutral500,
-                fontSize = 10.sp
-            )
+            Text("Headroom is Android's normalized thermal budget signal. Higher is generally better; unavailable means the device did not expose it.", color = Neutral500, fontSize = 10.sp)
         }
     }
 }
@@ -266,23 +295,16 @@ fun SettingsScreen(context: Context) {
             SettingRow("Dark gaming theme", true) { }
         }
         SectionCard("ANDROID") {
-            Button(
-                onClick = {
-                    runCatching { context.startActivity(Intent(Settings.ACTION_SETTINGS)) }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Neutral800)
-            ) { Text("OPEN ANDROID SETTINGS", color = Color.White) }
+            Button(onClick = { runCatching { context.startActivity(Intent(Settings.ACTION_SETTINGS)) } }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Neutral800)) {
+                Text("OPEN ANDROID SETTINGS", color = Color.White)
+            }
         }
     }
 }
 
 @Composable
 fun FeatureScaffold(title: String, subtitle: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        Modifier.fillMaxSize().background(Neutral950).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
+    Column(Modifier.fillMaxSize().background(Neutral950).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(title, color = Cyan400, fontSize = 24.sp, fontWeight = FontWeight.Black)
         Text(subtitle, color = Neutral400, fontSize = 13.sp)
         content()
@@ -291,10 +313,7 @@ fun FeatureScaffold(title: String, subtitle: String, content: @Composable Column
 
 @Composable
 private fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Neutral900).border(1.dp, Neutral800, RoundedCornerShape(18.dp)).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Neutral900).border(1.dp, Neutral800, RoundedCornerShape(18.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(title, color = Neutral400, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         content()
     }
