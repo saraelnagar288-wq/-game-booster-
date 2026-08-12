@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,7 +18,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -35,7 +35,6 @@ import com.gameboost.ai.ui.theme.Neutral500
 import com.gameboost.ai.ui.theme.Neutral800
 import com.gameboost.ai.ui.theme.Neutral900
 import com.gameboost.ai.ui.theme.Neutral950
-import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 @Composable
@@ -76,12 +75,6 @@ fun DynamicFpsMonitorScreen() {
             }
             choreographer.postFrameCallback(callback)
             onDispose { choreographer.removeFrameCallback(callback) }
-        }
-    }
-
-    LaunchedEffect(running) {
-        if (running && history.isEmpty()) {
-            delay(100)
         }
     }
 
