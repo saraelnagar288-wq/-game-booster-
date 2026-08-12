@@ -74,7 +74,12 @@ fun PerformanceScreen() {
                 v.coerceIn(0, 100)
             }
             val animated by animateFloatAsState(score / 100f, label = "score")
-            Surface(Modifier.fillMaxWidth(), RoundedCornerShape(24.dp), Color.Transparent, androidx.compose.foundation.BorderStroke(1.dp, Cyan400.copy(.28f))) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.Transparent,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Cyan400.copy(.28f))
+            ) {
                 Box(Modifier.background(Brush.linearGradient(listOf(Color(0xFF102C31), Neutral900, Color(0xFF121417))), RoundedCornerShape(24.dp)).padding(20.dp)) {
                     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                         Column {
@@ -86,7 +91,7 @@ fun PerformanceScreen() {
                             Text("CPU • RAM • thermal • display", color = Neutral500, fontSize = 10.sp)
                         }
                         Box(contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(progress = { animated }, Modifier.size(86.dp), color = Cyan400, trackColor = Neutral800, strokeWidth = 8.dp)
+                            CircularProgressIndicator(progress = { animated }, modifier = Modifier.size(86.dp), color = Cyan400, trackColor = Neutral800, strokeWidth = 8.dp)
                             Text("${(animated * 100).roundToInt()}", color = Cyan400, fontWeight = FontWeight.Black)
                         }
                     }
@@ -103,7 +108,12 @@ fun PerformanceScreen() {
             }
             ChartCard("CPU LOAD", cpuHistory, "Live CPU usage")
             ChartCard("RAM LOAD", ramHistory, "Live system memory usage")
-            Surface(Modifier.fillMaxWidth(), RoundedCornerShape(18.dp), Neutral900, androidx.compose.foundation.BorderStroke(1.dp, Cyan400.copy(.18f))) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = Neutral900,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Cyan400.copy(.18f))
+            ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                     Text("ANDROID PERFORMANCE", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
                     Text("Official PerformanceHintManager support. No overclocking, kernel writes or fake optimization.", color = Neutral500, fontSize = 10.sp)
@@ -123,7 +133,12 @@ fun PerformanceScreen() {
                     }
                 }
             }
-            Surface(Modifier.fillMaxWidth(), RoundedCornerShape(18.dp), Neutral900, androidx.compose.foundation.BorderStroke(1.dp, Neutral800)) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = Neutral900,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Neutral800)
+            ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("GRAPHICS ENGINE", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
                     Info("GPU vendor", s.gpuVendor)
@@ -133,7 +148,12 @@ fun PerformanceScreen() {
                     Info("Android", "API ${s.apiLevel}")
                 }
             }
-            Surface(Modifier.fillMaxWidth(), RoundedCornerShape(18.dp), Color(0xFF10181A), androidx.compose.foundation.BorderStroke(1.dp, Cyan400.copy(.16f))) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = Color(0xFF10181A),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Cyan400.copy(.16f))
+            ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("FPS MONITOR", color = Cyan400, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
                     Text("FPS: NOT AVAILABLE FROM STANDARD APP APIs", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -146,8 +166,8 @@ fun PerformanceScreen() {
 
 @Composable
 private fun HardwareCard(title: String, value: String, sub: String, status: String, modifier: Modifier) {
-    Surface(modifier, RoundedCornerShape(18.dp), Neutral900, androidx.compose.foundation.BorderStroke(1.dp, Neutral800)) {
-        Column(Modifier.padding(14.dp), Arrangement.spacedBy(6.dp)) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(18.dp), color = Neutral900, border = androidx.compose.foundation.BorderStroke(1.dp, Neutral800)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(title, color = Cyan400, fontSize = 10.sp, fontWeight = FontWeight.Black)
             Text(value, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2)
             Text(sub, color = Neutral500, fontSize = 9.sp, maxLines = 2)
@@ -158,8 +178,8 @@ private fun HardwareCard(title: String, value: String, sub: String, status: Stri
 
 @Composable
 private fun StatCard(title: String, value: String, sub: String, modifier: Modifier) {
-    Surface(modifier, RoundedCornerShape(18.dp), Neutral900, androidx.compose.foundation.BorderStroke(1.dp, Neutral800)) {
-        Column(Modifier.padding(14.dp), Arrangement.spacedBy(5.dp)) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(18.dp), color = Neutral900, border = androidx.compose.foundation.BorderStroke(1.dp, Neutral800)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(title, color = Neutral500, fontSize = 9.sp, fontWeight = FontWeight.Bold)
             Text(value, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
             Text(sub, color = Neutral500, fontSize = 9.sp)
@@ -169,8 +189,8 @@ private fun StatCard(title: String, value: String, sub: String, modifier: Modifi
 
 @Composable
 private fun ChartCard(title: String, values: List<Float>, caption: String) {
-    Surface(Modifier.fillMaxWidth(), RoundedCornerShape(18.dp), Neutral900, androidx.compose.foundation.BorderStroke(1.dp, Neutral800)) {
-        Column(Modifier.padding(15.dp), Arrangement.spacedBy(7.dp)) {
+    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), color = Neutral900, border = androidx.compose.foundation.BorderStroke(1.dp, Neutral800)) {
+        Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
                 Text(title, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black)
                 Text(if (values.size >= 2) "LIVE" else "WAITING", color = Cyan400, fontSize = 9.sp, fontWeight = FontWeight.Bold)
