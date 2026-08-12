@@ -46,29 +46,41 @@ fun DashboardScreen(viewModel: MainViewModel, onNavigate: (String) -> Unit) {
             val tier = OptimizationEngine.getTier(score)
             val animatedScore by animateFloatAsState(score / 100f, label = "gamingScore")
 
-            Box(
-                Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(Color(0xFF10272B), Neutral900, Color(0xFF15171A))), RoundedCornerShape(22.dp)).border(1.dp, Cyan400.copy(alpha = .25f), RoundedCornerShape(22.dp)).padding(20.dp)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                color = Color.Transparent,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Cyan400.copy(alpha = .25f))
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                        Column {
-                            Text("GAMING SCORE", color = Neutral400, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                            Row(verticalAlignment = Alignment.Bottom) {
-                                Text("$score", color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Black)
-                                Text(" / 100", color = Neutral500, fontSize = 16.sp, modifier = Modifier.padding(bottom = 9.dp))
+                Box(
+                    Modifier.background(Brush.linearGradient(listOf(Color(0xFF10272B), Neutral900, Color(0xFF15171A))), RoundedCornerShape(22.dp)).padding(20.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                            Column {
+                                Text("GAMING SCORE", color = Neutral400, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                                Row(verticalAlignment = Alignment.Bottom) {
+                                    Text("$score", color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Black)
+                                    Text(" / 100", color = Neutral500, fontSize = 16.sp, modifier = Modifier.padding(bottom = 9.dp))
+                                }
+                            }
+                            Surface(shape = RoundedCornerShape(14.dp), color = Cyan400.copy(alpha = .12f)) {
+                                Text(tier.uppercase(), color = Cyan400, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
                             }
                         }
-                        Surface(shape = RoundedCornerShape(14.dp), color = Cyan400.copy(alpha = .12f)) {
-                            Text(tier.uppercase(), color = Cyan400, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
-                        }
+                        LinearProgressIndicator(progress = { animatedScore }, modifier = Modifier.fillMaxWidth().height(7.dp), color = Cyan400, trackColor = Neutral800)
+                        Text("Live device readiness • CPU • RAM • thermal • display", color = Neutral400, fontSize = 12.sp)
                     }
-                    LinearProgressIndicator(progress = { animatedScore }, modifier = Modifier.fillMaxWidth().height(7.dp), color = Cyan400, trackColor = Neutral800)
-                    Text("Live device readiness • CPU • RAM • thermal • display", color = Neutral400, fontSize = 12.sp)
                 }
             }
 
             SectionTitle("DEVICE")
-            Surface(Modifier.fillMaxWidth(), RoundedCornerShape(18.dp), Neutral900, androidx.compose.foundation.BorderStroke(1.dp, Neutral800)) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = Neutral900,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Neutral800)
+            ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(stats!!.model, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Text("${stats!!.osVersion} • ${stats!!.cpuCores} CPU cores", color = Neutral400, fontSize = 12.sp)
@@ -108,7 +120,7 @@ private fun SectionTitle(title: String) = Text(title, color = Neutral400, fontSi
 
 @Composable
 private fun MetricCard(label: String, value: String, caption: String, modifier: Modifier = Modifier) {
-    Surface(modifier, RoundedCornerShape(16.dp), Neutral900, androidx.compose.foundation.BorderStroke(1.dp, Neutral800)) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(16.dp), color = Neutral900, border = androidx.compose.foundation.BorderStroke(1.dp, Neutral800)) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(label, color = Neutral500, fontSize = 9.sp, fontWeight = FontWeight.Bold)
             Text(value, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
