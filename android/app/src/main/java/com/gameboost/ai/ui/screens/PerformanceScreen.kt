@@ -131,12 +131,24 @@ fun PerformanceScreen() {
                     }
                     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                         Column {
-                            Text("Game Mode", color = Neutral200, fontWeight = FontWeight.Bold)
-                            Text("Android 12+ • system selected", color = Neutral500, fontSize = 9.sp)
+                            Text("Game Mode API", color = Neutral200, fontWeight = FontWeight.Bold)
+                            Text("Android 12+ • app declared as game", color = Neutral500, fontSize = 9.sp)
+                        }
+                        Text(
+                            if (controller.gameModeApiSupported) "SUPPORTED" else "UNAVAILABLE",
+                            color = if (controller.gameModeApiSupported) Cyan400 else Neutral500,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                        Column {
+                            Text("Active Game Mode", color = Neutral200, fontWeight = FontWeight.Bold)
+                            Text("Selected by Android/OEM", color = Neutral500, fontSize = 9.sp)
                         }
                         Text(gameMode.uppercase(), color = Cyan400, fontSize = 10.sp, fontWeight = FontWeight.Black)
                     }
-                    Text("Supported modes: Standard • Performance • Battery. Mode selection is controlled by Android/OEM Game Dashboard; GameBoost AI reads the active mode and adapts its performance hints.", color = Neutral500, fontSize = 9.sp)
+                    Text("Performance mode → ~60 Hz hint target. Battery mode → ~30 Hz hint target. Standard keeps the normal target. GameBoost AI reads the system-selected mode; it does not modify Samsung thermal limits or CPU/GPU clocks.", color = Neutral500, fontSize = 9.sp)
                 }
             }
             Surface(
