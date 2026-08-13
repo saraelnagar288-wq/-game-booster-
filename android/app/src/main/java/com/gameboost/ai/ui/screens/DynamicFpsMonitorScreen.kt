@@ -6,12 +6,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -106,9 +104,9 @@ fun DynamicFpsMonitorScreen() {
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            Metric("AVERAGE", "${average.roundToInt()} FPS")
-            Metric("LOW", "${low.roundToInt()} FPS")
-            Metric("FRAME TIME", "${"%.1f".format(frameTimeMs)} ms")
+            Metric("AVERAGE", "${average.roundToInt()} FPS", Modifier.fillMaxWidth(0.32f))
+            Metric("LOW", "${low.roundToInt()} FPS", Modifier.fillMaxWidth(0.48f))
+            Metric("FRAME TIME", "${"%.1f".format(frameTimeMs)} ms", Modifier.fillMaxWidth())
         }
 
         Column(
@@ -126,7 +124,7 @@ fun DynamicFpsMonitorScreen() {
                     val height = (value.coerceIn(1f, 120f) / 120f * 110f).dp
                     Spacer(
                         Modifier
-                            .weight(1f)
+                            .fillMaxWidth(1f / bars.size.coerceAtLeast(1))
                             .height(height)
                             .background(Cyan400.copy(alpha = .75f), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                     )
@@ -151,10 +149,9 @@ fun DynamicFpsMonitorScreen() {
 }
 
 @Composable
-private fun RowScope.Metric(label: String, value: String) {
+private fun Metric(label: String, value: String, modifier: Modifier) {
     Column(
-        modifier = Modifier
-            .weight(1f)
+        modifier = modifier
             .clip(RoundedCornerShape(14.dp))
             .background(Neutral900)
             .border(1.dp, Neutral800, RoundedCornerShape(14.dp))
