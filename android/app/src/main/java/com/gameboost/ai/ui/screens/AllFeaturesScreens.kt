@@ -135,7 +135,7 @@ fun BatteryScreen(context: Context) {
         MetricHero("$level%", "BATTERY", if (saver) "POWER SAVER ON" else "NORMAL", Emerald400)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             StatCard("SAVER", if (saver) "ON" else "OFF", Modifier.weight(1f))
-            StatCard("API", "Android ${Build.VERSION.SDK_INT}", Modifier.weight(1f))
+            StatCard("ANDROID", "Android ${Build.VERSION.RELEASE}", Modifier.weight(1f))
         }
         SectionCard("BATTERY") {
             Text("Capacity: $level%", color = Color.White)
