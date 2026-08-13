@@ -13,8 +13,13 @@
         android:icon="@drawable/gameboost_logo"
         android:roundIcon="@drawable/gameboost_logo"
         android:supportsRtl="true"
+        android:appCategory="game"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+        android:gameModeConfig="@xml/game_mode_config"
         tools:targetApi="36">
+        <meta-data
+            android:name="android.game_mode_config"
+            android:resource="@xml/game_mode_config" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
