@@ -14,6 +14,7 @@
         android:roundIcon="@drawable/gameboost_logo"
         android:supportsRtl="true"
         android:appCategory="game"
+        android:isGame="true"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
         tools:targetApi="36">
         <meta-data
