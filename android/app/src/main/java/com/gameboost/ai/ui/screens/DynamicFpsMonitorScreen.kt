@@ -1,6 +1,7 @@
 package com.gameboost.ai.ui.screens
 
 import android.view.Choreographer
+import android.view.WindowManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gameboost.ai.ui.theme.Cyan400
@@ -38,9 +40,14 @@ import kotlin.math.roundToInt
 @Composable
 fun DynamicFpsMonitorScreen() {
     var running by remember { mutableStateOf(true) }
-    var currentFps by remember { mutableFloatStateOf(0f) }
+    var appFps by remember { mutableFloatStateOf(0f) }
     var frameTimeMs by remember { mutableFloatStateOf(0f) }
     val history = remember { mutableStateListOf<Float>() }
+    val context = LocalContext.current
+    val refreshRate = remember {
+        val wm = context.getSystemService(WindowManager::class.java)
+        wm?.defaultDisplay?.refreshRate?.takeIf { it > 0f } ?: 60f
+    }
 
     DisposableEffect(running) {
         if (!running) {
@@ -58,7 +65,7 @@ fun DynamicFpsMonitorScreen() {
                         if (deltaNanos > 0L) {
                             val ms = (deltaNanos / 1_000_000f).coerceIn(1f, 1000f)
                             val fps = (1000f / ms).coerceIn(1f, 240f)
-                            currentFps = fps
+                            appFps = fps
                             frameTimeMs = ms
                             if (frameTimeNanos - lastPublishedNanos >= 250_000_000L) {
                                 history.add(fps)
@@ -76,9 +83,9 @@ fun DynamicFpsMonitorScreen() {
         }
     }
 
-    val average = if (history.isEmpty()) currentFps else history.average().toFloat()
-    val low = history.minOrNull() ?: currentFps
-    val bars = if (history.isEmpty()) listOf(currentFps.coerceAtLeast(1f)) else history.toList()
+    val average = if (history.isEmpty()) appFps else history.average().toFloat()
+    val low = history.minOrNull() ?: appFps
+    val bars = if (history.isEmpty()) listOf(appFps.coerceAtLeast(1f)) else history.toList()
 
     Column(
         modifier = Modifier
@@ -88,7 +95,7 @@ fun DynamicFpsMonitorScreen() {
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text("FPS MONITOR", color = Cyan400, fontSize = 24.sp)
-        Text("Real-time UI frame pacing monitor", color = Neutral400, fontSize = 13.sp)
+        Text("Accurate frame-pacing information", color = Neutral400, fontSize = 13.sp)
 
         Column(
             modifier = Modifier
@@ -98,15 +105,20 @@ fun DynamicFpsMonitorScreen() {
                 .border(1.dp, Cyan400.copy(alpha = .35f), RoundedCornerShape(20.dp))
                 .padding(20.dp)
         ) {
-            Text("FPS", color = Neutral400, fontSize = 11.sp)
-            Text(if (running) currentFps.roundToInt().coerceIn(0, 240).toString() else "0", color = Color.White, fontSize = 42.sp)
-            Text(if (running) "LIVE FRAME PACING" else "PAUSED", color = Cyan400, fontSize = 12.sp)
+            Text("GAME FPS", color = Neutral400, fontSize = 11.sp)
+            Text("N/A", color = Color.White, fontSize = 42.sp)
+            Text("NO GAME TELEMETRY SOURCE", color = Cyan400, fontSize = 12.sp)
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            Metric("AVERAGE", "${average.roundToInt()} FPS", Modifier.fillMaxWidth(0.32f))
-            Metric("LOW", "${low.roundToInt()} FPS", Modifier.fillMaxWidth(0.48f))
+            Metric("APP FPS", if (running) "${appFps.roundToInt()} FPS" else "PAUSED", Modifier.fillMaxWidth(0.32f))
+            Metric("DISPLAY", "${refreshRate.roundToInt()} Hz", Modifier.fillMaxWidth(0.48f))
             Metric("FRAME TIME", "${"%.1f".format(frameTimeMs)} ms", Modifier.fillMaxWidth())
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            Metric("APP AVG", "${average.roundToInt()} FPS", Modifier.fillMaxWidth(0.48f))
+            Metric("APP LOW", "${low.roundToInt()} FPS", Modifier.fillMaxWidth())
         }
 
         Column(
@@ -117,7 +129,7 @@ fun DynamicFpsMonitorScreen() {
                 .border(1.dp, Neutral800, RoundedCornerShape(18.dp))
                 .padding(16.dp)
         ) {
-            Text("LIVE FPS HISTORY", color = Neutral400, fontSize = 11.sp)
+            Text("APP FRAME HISTORY", color = Neutral400, fontSize = 11.sp)
             Spacer(Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth().height(130.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 bars.forEach { value ->
@@ -141,7 +153,7 @@ fun DynamicFpsMonitorScreen() {
         }
 
         Text(
-            "This measures GameBoost AI's own rendered frames. Exact FPS of another game requires a supported system/game telemetry source; the app does not invent a game FPS value.",
+            "Game FPS is shown as N/A until a supported game/system telemetry source is available. APP FPS measures GameBoost AI's own rendered frames and is not the FPS of another game.",
             color = Neutral500,
             fontSize = 11.sp
         )
