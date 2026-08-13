@@ -38,6 +38,7 @@ fun PerformanceScreen() {
     var hintActive by remember { mutableStateOf(false) }
     var cpuHistory by remember { mutableStateOf(emptyList<Float>()) }
     var ramHistory by remember { mutableStateOf(emptyList<Float>()) }
+    var gameMode by remember { mutableStateOf(controller.gameModeLabel()) }
     var lastMark by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(Unit) {
@@ -47,6 +48,7 @@ fun PerformanceScreen() {
             lastMark = now
             val value = analyzer.analyze()
             stats = value
+            gameMode = controller.gameModeLabel()
             value.cpuUsagePercent?.let { cpuHistory = (cpuHistory + it).takeLast(30) }
             ramHistory = (ramHistory + value.ramUsagePercent).takeLast(30)
             delay(1000)
@@ -116,7 +118,7 @@ fun PerformanceScreen() {
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                     Text("ANDROID PERFORMANCE", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-                    Text("Official PerformanceHintManager support. No overclocking, kernel writes or fake optimization.", color = Neutral500, fontSize = 10.sp)
+                    Text("Official PerformanceHintManager + Android Game Mode integration.", color = Neutral500, fontSize = 10.sp)
                     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                         Column {
                             Text("Performance Hint", color = Neutral200, fontWeight = FontWeight.Bold)
@@ -127,10 +129,14 @@ fun PerformanceScreen() {
                             if (!enabled) controller.stopPerformanceHintSession()
                         })
                     }
-                    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                        Text("Game Mode", color = Neutral500, fontSize = 10.sp)
-                        Text(controller.gameModeLabel().uppercase(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                        Column {
+                            Text("Game Mode", color = Neutral200, fontWeight = FontWeight.Bold)
+                            Text("Android 12+ • system selected", color = Neutral500, fontSize = 9.sp)
+                        }
+                        Text(gameMode.uppercase(), color = Cyan400, fontSize = 10.sp, fontWeight = FontWeight.Black)
                     }
+                    Text("Supported modes: Standard • Performance • Battery. Mode selection is controlled by Android/OEM Game Dashboard; GameBoost AI reads the active mode and adapts its performance hints.", color = Neutral500, fontSize = 9.sp)
                 }
             }
             Surface(
